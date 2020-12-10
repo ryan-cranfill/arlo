@@ -126,7 +126,7 @@ class Arlo(object):
         self.password = password
 
         self.request = Request()
-        
+
         headers = {
             'DNT': '1',
             'schemaVersion': '1',
@@ -139,7 +139,7 @@ class Arlo(object):
         body = self.request.post('https://my.arlo.com/hmsweb/login/v2', {'email': self.username, 'password': self.password}, headers=headers)
 
         headers['Authorization'] = body['token']
-      
+
         self.request.session.headers.update(headers)
 
         self.user_id = body['userId']
@@ -582,6 +582,12 @@ class Arlo(object):
         """ action : disabled OR recordSnapshot OR recordVideo """
         return self.NotifyAndGetResponse(basestation, {"action":"set","resource":"cameras/"+basestation.get('deviceId'),"publishResponse":True,"properties":{"eventAction":{"actionType":action,"stopType":"timeout","timeout":15,"emailNotification":{"enabled":email,"emailList":["__OWNER_EMAIL__"]},"pushNotification":push}}})
 
+    def SetDoorbellVoicemailOff(self, basestation, doorbell):
+        return self.NotifyAndGetResponse(basestation, {"action":"set","resource":"doorbells/"+doorbell.get('deviceId'),"publishResponse":True,"properties":{"voiceMailEnabled":False}})
+
+    def SetDoorbellVoicemailOn(self, basestation, doorbell):
+        return self.NotifyAndGetResponse(basestation, {"action":"set","resource":"doorbells/"+doorbell.get('deviceId'),"publishResponse":True,"properties":{"voiceMailEnabled":True}})
+
     """ Arlo Baby Audio Control """
     def GetAudioPlayback(self, basestation):
         return self.NotifyAndGetResponse(basestation, {"action":"get","resource":"audioPlayback","publishResponse":False})
@@ -595,7 +601,7 @@ class Arlo(object):
 
     def UnPauseTrack(self, basestation):
         return self.Notify(basestation, {"action":"play","resource":"audioPlayback/player"})
-   
+
     def SkipTrack(self, basestation):
         return self.Notify(basestation, {"action":"nextTrack","resource":"audioPlayback/player"})
 
@@ -619,6 +625,9 @@ class Arlo(object):
 
     def SetVolume(self, basestation, mute=False, volume=50):
         return self.NotifyAndGetResponse(basestation, {"action":"set","resource":"cameras/"+basestation.get('deviceId'),"publishResponse":True,"properties":{"speaker":{"mute":mute,"volume":volume}}})
+
+    def SetDoorbellSpeakerVolume(self, basestation, doorbell, mute=False, volume=50):
+        return self.NotifyAndGetResponse(basestation, {"action":"set","resource":"doorbells/"+doorbell.get('deviceId'),"publishResponse":True,"properties":{"speaker":{"mute":mute,"volume":volume}}})
 
     """  Baby Arlo Nightlight, (current state is in the arlo.GetCameraState(cameras[0]["properties"][0]["nightLight"]) """
     def SetNightLightOn(self, basestation):
@@ -834,7 +843,7 @@ class Arlo(object):
         """
         This method returns an array that contains the basestation, cameras, etc. and their metadata.
         If you pass in a valid device type, as a string or a list, this method will return an array of just those devices that match that type. An example would be ['basestation', 'camera']
-        To filter provisioned or unprovisioned devices pass in a True/False value for filter_provisioned. By default both types are returned. 
+        To filter provisioned or unprovisioned devices pass in a True/False value for filter_provisioned. By default both types are returned.
         """
         devices = self.request.get('https://my.arlo.com/hmsweb/users/devices')
         if device_type:
@@ -845,7 +854,7 @@ class Arlo(object):
                 devices = [ device for device in devices if device.get("state") == 'provisioned']
             else:
                 devices = [ device for device in devices if device.get("state") != 'provisioned']
-                
+
         return devices
 
     def GetDeviceSupport(self):
